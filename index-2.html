@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Mundo Actual</title>
+<style>
+:root{--bg:#0e0b0d;--card:#1a1417;--ink:#f7edf1;--mute:#a58f98;--line:#33262d;--rose:#ff5c9d;--ok:#3ecf7a;--pend:#f2b705;--mp:#009ee3}
+@media (prefers-color-scheme:light){:root{--bg:#fbf1ef;--card:#fff;--ink:#3b1f2b;--mute:#8a6b76;--line:#efd5d9;--rose:#c2185b;--ok:#2e7d32;--pend:#b7860b}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px}
+.w{max-width:560px;margin:0 auto;padding:22px 16px 60px}
+.k{color:var(--mute);font-size:14px;text-align:center;margin:0}
+h1{font-size:clamp(34px,10vw,50px);text-align:center;letter-spacing:1px;margin:6px 0 20px;text-transform:uppercase;font-weight:800}
+h1 span{color:var(--rose)}
+h2{font-size:20px;margin:26px 0 10px}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.c small{display:block;color:var(--mute);font-size:13px}.c b{font-size:22px}
+.bar{height:12px;background:var(--line);border-radius:9px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--rose);width:0;transition:width .4s}
+.leg{display:flex;gap:14px;color:var(--mute);font-size:14px;margin:0 0 10px;flex-wrap:wrap}
+.leg s{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:5px;vertical-align:-1px;text-decoration:none}
+.g{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.n{aspect-ratio:1;border-radius:12px;border:2px solid var(--rose);background:transparent;color:var(--ink);font:700 18px system-ui,sans-serif;cursor:pointer;padding:0}
+.n.on{background:var(--rose);color:#fff}
+.n.x{border-color:var(--ok);background:var(--ok);color:#06210f;cursor:default}
+.n.p{border-color:var(--pend);background:var(--pend);color:#2a2000;cursor:default}
+.n:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+.li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.li b{color:var(--rose);margin-right:8px}
+label{display:block;font-weight:600;margin:12px 0 5px}
+input{width:100%;font:inherit;padding:12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.b{display:block;width:100%;font:700 17px system-ui,sans-serif;padding:15px;border:0;border-radius:12px;margin-top:12px;cursor:pointer;text-align:center;text-decoration:none;color:#fff}
+.mp{background:var(--mp)}.wa{background:#25d366;color:#083a1c}.gh{background:transparent;border:2px solid var(--line);color:var(--ink)}
+.dis{opacity:.4;pointer-events:none}
+.note{color:var(--mute);font-size:14px;margin:10px 0 0}
+.tot{font-size:26px;font-weight:800;margin:12px 0 0}
+.cp{width:auto;display:inline-block;padding:8px 14px;font-size:15px;margin:0}
+.ft{text-align:center;margin-top:30px}.ft a{color:var(--mute);font-size:14px}
+.ad{margin-top:26px;border-top:2px dashed var(--line);padding-top:16px}
+.err{color:var(--rose);font-weight:600;margin-top:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="w">
+<p class="k">Comprá tu número y pagá por Mercado Pago o alias</p>
+<h1 id="ttl"></h1>
+<div class="st" id="st"></div>
+<div class="c" style="margin-top:10px"><small>Progreso <span id="pc"></span></small><div class="bar"><i id="bar"></i></div></div>
+<h2>Tablero de números</h2>
+<p class="leg"><span><s style="border:2px solid var(--rose)"></s>Disponible</span><span><s style="background:var(--pend)"></s>Pendiente</span><span><s style="background:var(--ok)"></s>Vendido</span></p>
+<div class="g" id="g"></div>
+<h2>Lista de participantes</h2>
+<div id="ls"></div>
+<h2>Comprar mi número</h2>
+<div id="buy"></div>
+<div id="adm"></div>
+<p class="ft"><a href="#" id="own">Panel de administración</a></p>
+</main>
+<script type="application/json" id="state">{}</script>
+<script>
+const S=Object.assign({site:'',title:'Mi Mundo Actual',prize:'Premio a definir',price:1000,n:20,mp:'',alias:'',holder:'',wa:'',user:'',ph:'',sold:{}},JSON.parse(document.getElementById('state').textContent));
+
+const $=id=>document.getElementById(id);
+let owner=false,login=false,sel=[];
+const money=n=>'$ '+Number(n).toLocaleString('es-AR');
+const pad=i=>String(i).padStart(S.n>99?3:2,'0');
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function card(k,v){const c=el('div','c');c.append(el('small','',k),el('b','',v));return c}
+
+function render(){
+  $('ttl').textContent=S.title||'Mi Mundo Actual';document.title=S.title||'Mi Mundo Actual';
+  const ids=Object.keys(S.sold).map(Number).sort((a,b)=>a-b);
+  const paid=ids.filter(k=>S.sold[k].paid!==false).length,taken=ids.length;
+  $('st').replaceChildren(card('Precio por número',money(S.price)),card('Números vendidos',`${paid} / ${S.n}`),card('Disponibles',S.n-taken),card('Premio',S.prize||'-'));
+  const pc=Math.round(paid/S.n*100);$('bar').style.width=pc+'%';$('pc').textContent=pc+'%';
+  const g=$('g');g.replaceChildren();
+  for(let i=1;i<=S.n;i++){
+    const s=S.sold[i];
+    const b=el('button','n'+(s?(s.paid===false?' p':' x'):'')+(sel.includes(i)?' on':''),pad(i));
+    if(!s||owner){b.onclick=()=>{owner?sel=[i]:sel=sel.includes(i)?sel.filter(x=>x!=i):[...sel,i].sort((a,b)=>a-b);render()}}
+    else{b.disabled=true;b.setAttribute('aria-label',`Número ${i} ocupado`)}
+    g.append(b);
+  }
+  const ls=$('ls');ls.replaceChildren();
+  if(!ids.length)ls.append(el('p','note','Todavía no hay participantes.'));
+  ids.forEach(k=>{const s=S.sold[k],r=el('div','li'),a=el('span');a.append(el('b','',pad(k)),document.createTextNode(s.name));r.append(a,el('span','note',s.paid===false?'⏳ pendiente':'✓ pagado'));ls.append(r)});
+  buy();admin();
+}
+
+let done=null,berr='';
+function payBlock(c,d){
+  if(S.alias){
+    const r=el('div','li'),t=el('div','',`Alias: ${S.alias}`);
+    if(S.holder)t.append(document.createElement('br'),document.createTextNode('A nombre de: '+S.holder));
+    const cp=el('button','b gh cp','Copiar');cp.onclick=async()=>{try{await navigator.clipboard.writeText(S.alias);cp.textContent='¡Copiado!'}catch(e){cp.textContent='Copiá a mano'}};
+    r.append(t,cp);c.append(el('p','note',`Transferí ${money(d.tot)} a este alias:`),r);
+  }
+  if(S.mp){const m=el('a','b mp','Pagar con Mercado Pago');m.href=S.mp;m.target='_blank';m.rel='noopener';c.append(m);if(d.nums.length>1)c.append(el('p','note','Si el link cobra un solo número, transferí el total al alias.'))}
+  if(!S.alias&&!S.mp)c.append(el('p','note','Los datos de pago todavía no están cargados.'));
+  if(S.wa){const w=el('a','b wa','Ya pagué: enviar comprobante por WhatsApp');w.href='https://wa.me/'+S.wa.replace(/\D/g,'')+'?text='+encodeURIComponent(`Hola! Soy ${d.name}. Reservé los números ${d.nums.map(pad).join(', ')} de ${S.title} y ya pagué ${money(d.tot)}. Te mando el comprobante.`);w.target='_blank';w.rel='noopener';c.append(w)}
+}
+function buy(){
+  const B=$('buy');B.replaceChildren();
+  if(owner){B.append(el('p','note','Estás en modo organizadora.'));return}
+  if(done){
+    const c=el('div','c');c.append(el('b','',`¡Reservado! Números: ${done.nums.map(pad).join(', ')}`),el('div','tot','Total: '+money(done.tot)));
+    c.append(el('p','note','Tus números quedan ⏳ reservados. Pagá y mandá el comprobante: cuando la organizadora confirme tu pago, quedan asignados a tu nombre.'));
+    payBlock(c,done);const nb=el('button','b gh','Reservar otros números');nb.onclick=()=>{done=null;render()};c.append(nb);B.append(c);return;
+  }
+  if(!sel.length){B.append(el('p','note','Tocá uno o más números del tablero para elegirlos.'));return}
+  const c=el('div','c'),tot=sel.length*S.price;
+  c.append(el('b','',`Tus números: ${sel.map(pad).join(', ')}`),el('div','tot',`Total: ${money(tot)}`));
+  const l=el('label','','Nombre y apellido');l.htmlFor='nm';const nm=el('input');nm.id='nm';nm.placeholder='Ej: María Pérez';
+  const l2=el('label','','Teléfono / WhatsApp');l2.htmlFor='tl';const tl=el('input');tl.id='tl';tl.type='tel';tl.placeholder='Ej: 3245 123456';
+  const rs=el('button','b mp','Reservar mis números'),e=el('div','err',berr);
+  const upd=()=>rs.classList.toggle('dis',!(nm.value.trim().split(/\s+/).length>=2&&tl.value.replace(/\D/g,'').length>=8));
+  nm.oninput=tl.oninput=upd;upd();
+  rs.onclick=async()=>{
+    rs.classList.add('dis');berr='';
+    try{
+      const r=await J('/api/app?a=reserve',{name:nm.value,phone:tl.value,numbers:sel}),d=await r.json();
+      if(d.state)Object.assign(S,d.state);
+      if(!r.ok){berr=d.error||'No se pudo reservar.';sel=sel.filter(n=>!S.sold[n])}
+      else{done={nums:[...sel],tot,name:nm.value.trim()};sel=[]}
+    }catch(x){berr='Sin conexión. Probá de nuevo.'}
+    render();
+  };
+  c.append(l,nm,l2,tl,rs,e,el('p','note','Reservar no te cobra nada: tu número queda apartado hasta que pagues y la organizadora confirme.'));B.append(c);
+}
+const J=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+async function push(b){try{const r=await J('/api/app?a=admin',b);if(!r.ok)throw 0;Object.assign(S,(await r.json()).state)}catch(e){alert('No se pudo guardar. Volvé a ingresar como organizadora.');owner=false}sel=[];render()}
+async function load(q){try{const was=JSON.stringify([S,owner]);const d=await(await fetch('/api/app?a=state')).json();const a=d.admin;delete d.admin;Object.assign(S,d);owner=!!a;if(q&&was===JSON.stringify([S,owner]))return}catch(e){}render()}
+function admin(){
+  const A=$('adm');A.replaceChildren();
+  if(owner)return adminPanel(A);
+  if(!login)return;
+  const box=el('div','ad');box.append(el('h2','','Ingresar como organizadora'));
+  const u=el('input');u.placeholder='Usuario';u.autocomplete='username';
+  const p=el('input');p.type='password';p.placeholder='Contraseña';p.autocomplete='current-password';
+  const e=el('div','err'),go=el('button','b mp','Entrar');
+  go.onclick=async()=>{const r=await J('/api/app?a=login',{user:u.value.trim(),pass:p.value});if(r.ok){owner=true;sel=[];render()}else e.textContent='Usuario o contraseña incorrectos.'};
+  box.append(el('label','','Usuario'),u,el('label','','Contraseña'),p,go,e);A.append(box);
+}
+function adminPanel(A){
+  const box=el('div','ad');box.append(el('h2','','Panel de la organizadora'));
+  const lo=el('button','b gh cp','Cerrar sesión');lo.onclick=async()=>{await J('/api/app?a=login',{logout:true});owner=false;login=false;sel=[];render()};box.append(lo);
+  const ids=Object.keys(S.sold).map(Number),paid=ids.filter(k=>S.sold[k].paid!==false).length;
+  box.append(el('p','',`Pagados: ${paid} · Pendientes: ${ids.length-paid} · Recaudado: ${money(paid*S.price)}`));
+  const gr={};ids.filter(k=>S.sold[k].paid===false).forEach(k=>{const x=S.sold[k],g=x.name+'|'+(x.phone||'')+'|'+(x.ts||0);(gr[g]=gr[g]||{x,ns:[]}).ns.push(k)});
+  const pend=Object.values(gr);document.title=(pend.length?'('+pend.length+') ':'')+S.title;
+  box.append(el('h2','',`Reservas pendientes (${pend.length})`));
+  if(!pend.length)box.append(el('p','note','No hay reservas esperando pago.'));
+  pend.sort((a,b)=>(a.x.ts||0)-(b.x.ts||0)).forEach(g=>{
+    const c=el('div','c');c.style.borderColor='var(--pend)';c.style.marginTop='8px';
+    g.ns.sort((a,b)=>a-b);
+    c.append(el('b','',g.x.name),el('div','note',`Números: ${g.ns.map(pad).join(', ')} · Total ${money(g.ns.length*S.price)}${g.x.date?' · '+g.x.date:''}`));
+    if(g.x.phone){const w=el('a','b wa','Escribirle por WhatsApp: '+g.x.phone);w.href='https://wa.me/'+String(g.x.phone).replace(/\D/g,'');w.target='_blank';w.rel='noopener';c.append(w)}
+    const ok=el('button','b mp','Confirmar pago ✓');ok.onclick=()=>push({action:'confirm',ns:g.ns});
+    const no=el('button','b gh','No pagó: liberar números');no.onclick=()=>{if(confirm('¿Liberar los números de '+g.x.name+'?'))push({action:'release',ns:g.ns})};
+    c.append(ok,no);box.append(c);
+  });
+  box.append(el('h2','','Cargar o corregir un número a mano'));
+  if(sel.length){
+    const k=sel[0],s=S.sold[k],c=el('div','c');c.append(el('b','',`Número ${pad(k)}`));
+    const inp=el('input');inp.placeholder='Nombre y apellido';inp.value=s?s.name:'';c.append(inp);
+    const set=p=>{const n=inp.value.trim();if(n)push({action:'set',n:k,name:n,paid:p})};
+    const ok=el('button','b mp','Marcar como pagado ✓');ok.onclick=()=>set(true);
+    const pe=el('button','b gh','Guardar como pendiente ⏳');pe.onclick=()=>set(false);c.append(ok,pe);
+    if(s){const f=el('button','b gh','Liberar número');f.onclick=()=>push({action:'free',n:k});c.append(f)}
+    box.append(c);
+  }else box.append(el('p','note','Tocá un número del tablero para cargar o cambiar su pago.'));
+  ids.sort((a,b)=>a-b).forEach(k=>{const s=S.sold[k];box.append(el('div','li',`${pad(k)} · ${s.name}${s.date?' · '+s.date:''}`))});
+  const fld=(t,v,ph,type)=>{box.append(el('label','',t));const i=el('input');if(type)i.type=type;i.value=v;if(ph)i.placeholder=ph;box.append(i);return i};
+  const ti=fld('Nombre de la dinámica',S.title),pr=fld('Premio',S.prize),pc=fld('Precio por número (pesos)',S.price,'','number'),nn=fld('Cantidad de números (1 a 300)',S.n,'','number'),
+    al=fld('Alias para transferir',S.alias),ho=fld('Nombre del titular de la cuenta',S.holder),
+    mp=fld('Link de Mercado Pago (opcional)',S.mp,'https://mpago.la/...'),wa=fld('Tu WhatsApp con código de país',S.wa,'5491112345678');
+  const sv=el('button','b wa','Guardar cambios');
+  sv.onclick=()=>push({action:'settings',title:ti.value,prize:pr.value,price:pc.value,n:nn.value,alias:al.value,holder:ho.value,mp:mp.value,wa:wa.value});
+  box.append(sv,el('p','note','Los cambios se ven al instante para todos. Esta pantalla se actualiza sola cada 20 segundos.'));A.append(box);
+}
+$('own').onclick=e=>{e.preventDefault();login=true;render();$('adm').scrollIntoView()};
+render();load();setInterval(()=>{const a=document.activeElement;if(a&&a.tagName==='INPUT')return;load(true)},20000);
+</script>
+</body>
+</html>
