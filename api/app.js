@@ -1,4 +1,4 @@
-// Mi Mundo Actual - servidor (un solo archivo)
+for(const k in process.env){if(k.endsWith('REST_API_URL'))process.env.KV_REST_API_URL=process.env[k];if(k.endsWith('REST_API_TOKEN'))process.env.KV_REST_API_TOKEN=process.env[k];}// Mi Mundo Actual - servidor (un solo archivo)
 const L = (() => { const exports = {};
 const crypto = require('crypto');
 const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
