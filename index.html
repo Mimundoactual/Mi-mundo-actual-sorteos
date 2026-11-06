@@ -35,6 +35,7 @@ input{width:100%;font:inherit;padding:12px;border:2px solid var(--line);border-r
 .mp{background:var(--mp)}.wa{background:#25d366;color:#083a1c}.gh{background:transparent;border:2px solid var(--line);color:var(--ink)}
 .dis{opacity:.4;pointer-events:none}
 .note{color:var(--mute);font-size:14px;margin:10px 0 0}
+.pz img{width:100%;border-radius:12px;margin-bottom:8px;display:block}textarea{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .tot{font-size:26px;font-weight:800;margin:12px 0 0}
 .cp{width:auto;display:inline-block;padding:8px 14px;font-size:15px;margin:0}
 .ft{text-align:center;margin-top:30px}.ft a{color:var(--mute);font-size:14px}
@@ -47,8 +48,11 @@ input{width:100%;font:inherit;padding:12px;border:2px solid var(--line);border-r
 <main class="w">
 <p class="k">Comprá tu número y pagá por Mercado Pago o alias</p>
 <h1 id="ttl"></h1>
+<p class="k" id="sub"></p>
+<div id="pz"></div>
 <div class="st" id="st"></div>
 <div class="c" style="margin-top:10px"><small>Progreso <span id="pc"></span></small><div class="bar"><i id="bar"></i></div></div>
+<div class="c" id="ex" style="margin-top:10px;display:none;white-space:pre-wrap"></div>
 <h2>Tablero de números</h2>
 <p class="leg"><span><s style="border:2px solid var(--rose)"></s>Disponible</span><span><s style="background:var(--pend)"></s>Pendiente</span><span><s style="background:var(--ok)"></s>Vendido</span></p>
 <div class="g" id="g"></div>
@@ -61,7 +65,7 @@ input{width:100%;font:inherit;padding:12px;border:2px solid var(--line);border-r
 </main>
 <script type="application/json" id="state">{}</script>
 <script>
-const S=Object.assign({site:'',title:'Mi Mundo Actual',prize:'Premio a definir',price:1000,n:20,mp:'',alias:'',holder:'',wa:'',user:'',ph:'',sold:{}},JSON.parse(document.getElementById('state').textContent));
+const S=Object.assign({site:'',title:'Mi Mundo Actual',prize:'Premio a definir',price:1000,n:20,mp:'',alias:'',holder:'',wa:'',user:'',ph:'',sub:'',extra:'',prizes:[],sold:{}},JSON.parse(document.getElementById('state').textContent));
 
 const $=id=>document.getElementById(id);
 let owner=false,login=false,sel=[];
@@ -72,9 +76,13 @@ function card(k,v){const c=el('div','c');c.append(el('small','',k),el('b','',v))
 
 function render(){
   $('ttl').textContent=S.title||'Mi Mundo Actual';document.title=S.title||'Mi Mundo Actual';
+  $('sub').textContent=S.sub||'';$('sub').style.display=S.sub?'':'none';
+  const pzs=(S.prizes||[]).map((p,i)=>({...p,i})).filter(p=>p.t||p.img),PZ=$('pz');PZ.replaceChildren();
+  pzs.forEach(p=>{const c=el('div','c pz');c.style.marginTop='10px';if(p.img){const im=el('img');im.src='/api/app?a=img&i='+p.i+'&v='+p.img;im.alt='Premio '+(p.i+1);c.append(im)}c.append(el('small','',pzs.length>1?`🎁 ${p.i+1}° premio`:'🎁 Premio'),el('b','',p.t||''));if(p.w){const w=el('div','',`🏆 Ganador/a: ${p.w}`);w.style.cssText='font-weight:800;font-size:18px;margin-top:8px';c.append(w)}PZ.append(c)});
+  $('ex').textContent=S.extra||'';$('ex').style.display=S.extra?'':'none';
   const ids=Object.keys(S.sold).map(Number).sort((a,b)=>a-b);
   const paid=ids.filter(k=>S.sold[k].paid!==false).length,taken=ids.length;
-  $('st').replaceChildren(card('Precio por número',money(S.price)),card('Números vendidos',`${paid} / ${S.n}`),card('Disponibles',S.n-taken),card('Premio',S.prize||'-'));
+  $('st').replaceChildren(card('Precio por número',money(S.price)),card('Números vendidos',`${paid} / ${S.n}`),card('Disponibles',S.n-taken),card('Premio',pzs.length>1?pzs.length+' premios':(pzs[0]&&pzs[0].t)||S.prize||'-'));
   const pc=Math.round(paid/S.n*100);$('bar').style.width=pc+'%';$('pc').textContent=pc+'%';
   const g=$('g');g.replaceChildren();
   for(let i=1;i<=S.n;i++){
@@ -144,6 +152,7 @@ function admin(){
   go.onclick=async()=>{const r=await J('/api/app?a=login',{user:u.value.trim(),pass:p.value});if(r.ok){owner=true;sel=[];render()}else e.textContent='Usuario o contraseña incorrectos.'};
   box.append(el('label','','Usuario'),u,el('label','','Contraseña'),p,go,e);A.append(box);
 }
+function shrink(file){return new Promise((ok,no)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{let m=900,q=.72,d;for(;;){const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);d=c.toDataURL('image/jpeg',q);if(d.length<380000||m<400)break;m-=150;q-=.08}URL.revokeObjectURL(u);ok(d)};im.onerror=()=>no();im.src=u})}
 function adminPanel(A){
   const box=el('div','ad');box.append(el('h2','','Panel de la organizadora'));
   const lo=el('button','b gh cp','Cerrar sesión');lo.onclick=async()=>{await J('/api/app?a=login',{logout:true});owner=false;login=false;sel=[];render()};box.append(lo);
@@ -174,15 +183,25 @@ function adminPanel(A){
   }else box.append(el('p','note','Tocá un número del tablero para cargar o cambiar su pago.'));
   ids.sort((a,b)=>a-b).forEach(k=>{const s=S.sold[k];box.append(el('div','li',`${pad(k)} · ${s.name}${s.date?' · '+s.date:''}`))});
   const fld=(t,v,ph,type)=>{box.append(el('label','',t));const i=el('input');if(type)i.type=type;i.value=v;if(ph)i.placeholder=ph;box.append(i);return i};
-  const ti=fld('Nombre de la dinámica',S.title),pr=fld('Premio',S.prize),pc=fld('Precio por número (pesos)',S.price,'','number'),nn=fld('Cantidad de números (1 a 300)',S.n,'','number'),
+  const ti=fld('Nombre de la dinámica',S.title),su=fld('Subtítulo (ej: Unite a nuestro canal para enterarte del sorteo)',S.sub||'');
+  const P0=(S.prizes&&S.prizes.length)?S.prizes:[{t:S.prize==='Premio a definir'?'':S.prize,w:'',img:0}],pzr=[];
+  for(let i=0;i<4;i++){const p=P0[i]||{t:'',w:'',img:0};box.append(el('h2','',`Premio ${i+1}`));
+    const t=fld('Qué se sortea',p.t||'',i?'Dejalo vacío si no lo usás':''),w=fld('Ganador/a (lo escribís después del sorteo)',p.w||'');pzr.push({t,w});
+    if(p.img){const im=el('img');im.src='/api/app?a=img&i='+i+'&v='+p.img;im.style.cssText='width:100%;max-width:240px;border-radius:10px;margin:8px 0;display:block';box.append(im);
+      const rm=el('button','b gh','Quitar foto');rm.onclick=async()=>{await push(collect());push({action:'delphoto',i})};box.append(rm)}
+    box.append(el('label','',p.img?'Cambiar foto':'Subir foto'));const f=el('input');f.type='file';f.accept='image/*';
+    f.onchange=async()=>{if(!f.files[0])return;try{const d=await shrink(f.files[0]);await push(collect());await push({action:'photo',i,data:d})}catch(e){alert('No se pudo cargar la foto.')}};box.append(f)}
+  box.append(el('h2','','Texto extra'));const ex=el('textarea');ex.rows=4;ex.value=S.extra||'';ex.placeholder='Ej: Cómo participar, fecha del sorteo, reglas...';box.append(ex);
+  box.append(el('h2','','Datos del sorteo'));
+  const pc=fld('Precio por número (pesos)',S.price,'','number'),nn=fld('Cantidad de números (1 a 300)',S.n,'','number'),
     al=fld('Alias para transferir',S.alias),ho=fld('Nombre del titular de la cuenta',S.holder),
     mp=fld('Link de Mercado Pago (opcional)',S.mp,'https://mpago.la/...'),wa=fld('Tu WhatsApp con código de país',S.wa,'5491112345678');
-  const sv=el('button','b wa','Guardar cambios');
-  sv.onclick=()=>push({action:'settings',title:ti.value,prize:pr.value,price:pc.value,n:nn.value,alias:al.value,holder:ho.value,mp:mp.value,wa:wa.value});
+  const collect=()=>({action:'settings',title:ti.value,sub:su.value,extra:ex.value,prizes:pzr.map(p=>({t:p.t.value,w:p.w.value})),price:pc.value,n:nn.value,alias:al.value,holder:ho.value,mp:mp.value,wa:wa.value});
+  const sv=el('button','b wa','Guardar cambios');sv.onclick=()=>push(collect());
   box.append(sv,el('p','note','Los cambios se ven al instante para todos. Esta pantalla se actualiza sola cada 20 segundos.'));A.append(box);
 }
 $('own').onclick=e=>{e.preventDefault();login=true;render();$('adm').scrollIntoView()};
-render();load();setInterval(()=>{const a=document.activeElement;if(a&&a.tagName==='INPUT')return;load(true)},20000);
+render();load();setInterval(()=>{const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'))return;load(true)},20000);
 </script>
 </body>
 </html>
